@@ -1,0 +1,20 @@
+{
+  "name": "contextpipe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ContextPipe Chrome Extension",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "fast-check": "^3.19.0",
+    "jsdom": "^24.0.0",
+    "linkedom": "^0.16.11",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "jszip": "3.10.1"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "manifest_version": 3,
+  "name": "ContextBridge – Local RAG Companion",
+  "version": "1.1.0",
+  "description": "Store, search, and chat with web page content locally. AI chat (BYOK), full-text search, markdown export, and optional RAG endpoint.",
+  "author": "ContextBridge",
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "alarms",
+    "sidePanel",
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "src/background/worker.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_title": "ContextBridge – Open Panel",
+    "default_icon": {
+      "16":  "assets/icons/icon16.png",
+      "32":  "assets/icons/icon32.png",
+      "48":  "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+
+  "side_panel": {
+    "default_path": "src/sidepanel/sidepanel.html"
+  },
+
+  "commands": {
+    "index-page": {
+      "suggested_key": {
+        "default":   "Ctrl+Shift+E",
+        "mac":       "Command+Shift+E"
+      },
+      "description": "Index the current page to your local RAG endpoint"
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+B",
+        "mac":     "Command+Shift+B"
+      }
+    }
+  },
+
+  "content_scripts": [],
+
+  "icons": {
+    "16":  "assets/icons/icon16.png",
+    "32":  "assets/icons/icon32.png",
+    "48":  "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none';"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["src/content/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

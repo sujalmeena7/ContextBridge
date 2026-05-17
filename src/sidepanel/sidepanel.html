@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ContextBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <span class="brand-name">ContextBridge</span>
+        <span class="brand-sub">RAG Companion</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- Status indicator -->
+      <div class="status-pill" id="statusPill">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Checking...</span>
+      </div>
+      <!-- Settings button -->
+      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Current Page Preview ────────────────────────────────── -->
+  <div class="page-preview" id="pagePreview">
+    <div class="page-favicon" id="pageFavicon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="page-info">
+      <div class="page-title" id="pageTitle">Loading current page...</div>
+      <div class="page-url" id="pageUrl">—</div>
+    </div>
+    <div class="page-badge" id="contentTypeBadge"></div>
+  </div>
+
+  <!-- ── Main Action ────────────────────────────────────────── -->
+  <div class="action-zone">
+    <button class="index-btn" id="indexBtn" aria-label="Index current page">
+      <div class="index-btn-icon" id="indexBtnIcon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="index-btn-text">
+        <span class="index-btn-label" id="indexBtnLabel">Index Current Page</span>
+        <span class="index-btn-shortcut">Ctrl+Shift+E</span>
+      </div>
+    </button>
+
+    <!-- Status log -->
+    <div class="status-log" id="statusLog">
+      <div class="log-entry log-idle" id="logEntry">
+        <span class="log-icon">◦</span>
+        <span id="logText">Ready to index</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Dedup Warning Banner ───────────────────────────────── -->
+  <div class="dedup-banner hidden" id="dedupBanner">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <span id="dedupText">Already indexed — re-index anyway?</span>
+    <button class="dedup-reindex-btn" id="dedupReindexBtn">Re-index</button>
+  </div>
+
+  <!-- ── Tabs ──────────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab active" data-tab="history" id="tabHistory">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      History
+    </button>
+    <button class="tab" data-tab="queue" id="tabQueue">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+        <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
+        <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>
+        <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" stroke-width="2"/>
+        <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" stroke-width="2"/>
+        <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Queue <span class="tab-badge hidden" id="queueBadge">0</span>
+    </button>
+    <button class="tab" data-tab="stats" id="tabStats">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <line x1="18" y1="20" x2="18" y2="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="20" x2="12" y2="4" stroke="currentColor" stroke-width="2"/>
+        <line x1="6" y1="20" x2="6" y2="14" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Stats
+    </button>
+    <button class="tab" data-tab="search" id="tabSearch">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Search
+    </button>
+    <button class="tab" data-tab="chat" id="tabChat">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Chat
+    </button>
+  </div>
+
+  <!-- ── Panel: History ────────────────────────────────────── -->
+  <div class="panel active" id="panelHistory">
+    <div class="panel-toolbar">
+      <span class="panel-count" id="historyCount">0 pages indexed</span>
+      <div class="panel-toolbar-actions">
+        <button class="ghost-btn export-btn" id="exportMarkdownBtn" title="Export to Markdown">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Export
+        </button>
+        <button class="ghost-btn" id="clearHistoryBtn">Clear all</button>
+      </div>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="historyEmpty">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No pages indexed yet</div>
+        <div class="empty-sub">Click "Index Current Page" to get started</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Panel: Queue ──────────────────────────────────────── -->
+  <div class="panel" id="panelQueue">
+    <div class="panel-toolbar">
+      <span class="panel-count" id="queueCount">0 items pending</span>
+      <button class="ghost-btn" id="flushQueueBtn">Flush now</button>
+    </div>
+    <div class="queue-list" id="queueList">
+      <div class="empty-state" id="queueEmpty">
+        <div class="empty-icon">✅</div>
+        <div class="empty-title">Queue is empty</div>
+        <div class="empty-sub">Failed sends are queued here and auto-retried</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Panel: Stats ──────────────────────────────────────── -->
+  <div class="panel" id="panelStats">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Indexed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statToday">0</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statWords">0</div>
+        <div class="stat-label">Words Sent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statQueued">0</div>
+        <div class="stat-label">Queued</div>
+      </div>
+    </div>
+    <div class="storage-stats" id="storageStats">
+      <div class="breakdown-title">Local Storage</div>
+      <div class="storage-stats-row">
+        <span class="storage-stat-item"><strong id="statDbRecords">0</strong> records</span>
+        <span class="storage-stat-sep">·</span>
+        <span class="storage-stat-item"><strong id="statDbSize">0</strong> MB</span>
+      </div>
+    </div>
+    <div class="domain-breakdown" id="domainBreakdown">
+      <div class="breakdown-title">By Domain</div>
+      <div id="domainList"></div>
+    </div>
+    <div class="tag-cloud" id="tagCloud">
+      <div class="breakdown-title">Tags</div>
+      <div id="tagList"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel: Search ─────────────────────────────────────── -->
+  <div class="panel" id="panelSearch">
+    <div class="search-header">
+      <div class="search-input-wrap">
+        <svg class="search-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search indexed pages…" autocomplete="off" />
+      </div>
+      <div class="search-result-count hidden" id="searchResultCount">0 results</div>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="empty-state" id="searchEmpty">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">Search your indexed pages</div>
+        <div class="empty-sub">Type a keyword to find matching content</div>
+      </div>
+      <div class="empty-state hidden" id="searchNoResults">
+        <div class="empty-icon">🤷</div>
+        <div class="empty-title">No matches found</div>
+        <div class="empty-sub">Try a different keyword or index more pages</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Panel: Chat ──────────────────────────────────────── -->
+  <div class="panel" id="panelChat">
+    <div class="panel-toolbar">
+      <span class="panel-count" id="chatContextLabel">No page loaded</span>
+      <div class="panel-toolbar-actions">
+        <button class="ghost-btn" id="clearChatBtn">Clear chat</button>
+      </div>
+    </div>
+    <div class="chat-area" id="chatContainer"></div>
+    <div class="chat-input-area" id="chatInputArea">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Ask about this page…" autocomplete="off" />
+      <button class="chat-send-btn" id="chatSendBtn" title="Send message" aria-label="Send message">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Settings Drawer ───────────────────────────────────── -->
+  <div class="settings-overlay hidden" id="settingsOverlay"></div>
+  <div class="settings-drawer hidden" id="settingsDrawer">
+    <div class="settings-header">
+      <h2>Settings</h2>
+      <button class="icon-btn" id="closeSettingsBtn" aria-label="Close settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">Storage Mode</label>
+      <select id="settingStorageMode" class="settings-input settings-select">
+        <option value="local-only">Local Only</option>
+        <option value="endpoint-only">Endpoint Only</option>
+        <option value="both">Both</option>
+      </select>
+      <div class="settings-hint">Where to store indexed content</div>
+    </div>
+
+    <div class="settings-section" id="endpointSettingsGroup">
+      <label class="settings-label">Local Endpoint URL</label>
+      <input type="text" id="settingEndpoint" class="settings-input"
+        placeholder="http://localhost:8000/v1/context" />
+      <div class="settings-hint">Your local RAG / vector store ingestion endpoint</div>
+    </div>
+
+    <div class="settings-section" id="endpointApiKeyGroup">
+      <label class="settings-label">API Key (optional)</label>
+      <input type="password" id="settingApiKey" class="settings-input"
+        placeholder="Bearer token or API key" />
+      <div class="settings-hint">Sent as Authorization: Bearer &lt;key&gt;</div>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">Request Timeout (ms)</label>
+      <input type="number" id="settingTimeout" class="settings-input"
+        placeholder="8000" min="1000" max="60000" />
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">Duplicate URL Mode</label>
+      <select id="settingDedup" class="settings-input settings-select">
+        <option value="warn">Warn before re-indexing</option>
+        <option value="skip">Silently skip duplicates</option>
+        <option value="allow">Always allow re-index</option>
+      </select>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">RAG Chunk Size (words)</label>
+      <input type="number" id="settingChunkSize" class="settings-input"
+        placeholder="1200" min="200" max="4000" />
+      <div class="settings-hint">Larger = fewer chunks, less context overlap</div>
+    </div>
+
+    <div class="settings-section settings-row">
+      <div>
+        <label class="settings-label">Notifications</label>
+        <div class="settings-hint">Show success / failure toasts</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="settingNotifications" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">AI Provider</label>
+      <select id="chatProvider" class="settings-input settings-select">
+        <option value="claude" selected>Claude</option>
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Gemini</option>
+      </select>
+      <div class="settings-hint">AI provider for Chat with Page</div>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">Chat API Key</label>
+      <input type="password" id="chatApiKey" class="settings-input"
+        placeholder="API key for the selected AI provider" />
+      <div class="settings-hint">Used to authenticate with the selected AI provider</div>
+    </div>
+
+    <button class="save-settings-btn" id="saveSettingsBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="2"/>
+        <polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" stroke-width="2"/>
+        <polyline points="7 3 7 8 15 8" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Save Settings
+    </button>
+
+    <div class="settings-footer">
+      <div class="version-info">ContextBridge v1.0.0</div>
+      <a href="#" id="testEndpointBtn" class="test-link">Test endpoint connection →</a>
+    </div>
+
+    <div class="settings-section settings-danger-zone">
+      <button class="danger-btn" id="clearLocalDbBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Clear Local Storage
+      </button>
+      <div class="settings-hint">Permanently delete all locally stored content records</div>
+    </div>
+  </div>
+
+  <!-- ── Toast notification ─────────────────────────────────── -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>
