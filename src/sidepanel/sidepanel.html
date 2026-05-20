@@ -334,15 +334,23 @@
         <option value="claude" selected>Claude</option>
         <option value="openai">OpenAI</option>
         <option value="gemini">Gemini</option>
+        <option value="ollama">Ollama (Local)</option>
       </select>
       <div class="settings-hint">AI provider for Chat with Page</div>
     </div>
 
-    <div class="settings-section">
+    <div class="settings-section" id="chatApiKeyGroup">
       <label class="settings-label">Chat API Key</label>
       <input type="password" id="chatApiKey" class="settings-input"
         placeholder="API key for the selected AI provider" />
       <div class="settings-hint">Used to authenticate with the selected AI provider</div>
+    </div>
+
+    <div class="settings-section hidden" id="ollamaHostGroup">
+      <label class="settings-label">Ollama Host URL</label>
+      <input type="text" id="ollamaHost" class="settings-input"
+        placeholder="http://localhost:11434" />
+      <div class="settings-hint">URL of your local Ollama instance</div>
     </div>
 
     <button class="save-settings-btn" id="saveSettingsBtn">

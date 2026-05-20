@@ -38,6 +38,26 @@
   --panel-w:    360px;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cream:      #121212;
+    --cream-2:    #1E1E1E;
+    --cream-3:    #2A2A2A;
+    --charcoal:   #FDFBF7;
+    --charcoal-2: #E0E0E0;
+    --charcoal-3: #BDBDBD;
+    --muted:      #9E9E9E;
+    --border:     #333333;
+    --terra:      #C05C46;
+    --terra-dim:  #9B4735;
+    --terra-soft: rgba(192, 92, 70, 0.15);
+    --terra-glow: rgba(192, 92, 70, 0.25);
+    --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md:  0 4px 16px rgba(0,0,0,0.4);
+    --shadow-lg:  0 12px 40px rgba(0,0,0,0.5);
+  }
+}
+
 html, body {
   width: 100%;
   min-height: 100vh;
@@ -61,6 +81,8 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 10;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--cream) 85%, transparent);
 }
 
 .header-left { display: flex; align-items: center; gap: 10px; }
@@ -209,7 +231,7 @@ html, body {
 .index-btn:hover {
   background: var(--charcoal-2);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 16px var(--terra-glow);
 }
 .index-btn:hover::before { opacity: 1; }
 

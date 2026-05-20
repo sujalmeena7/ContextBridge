@@ -36,8 +36,65 @@
   function extractPage() {
     const hostname = location.hostname.replace(/^www\./, '');
     const title = document.title || 'Untitled';
+    const codeBlocks = [];
+    let truncated = false;
 
-    // Find a small content element — NEVER process document.body
+    // Recursive DOM to Markdown converter
+    function domToMarkdown(node) {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+      if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+      const tag = node.tagName.toLowerCase();
+      if (['script', 'style', 'nav', 'footer', 'svg', 'noscript', 'button', 'iframe'].includes(tag)) return '';
+
+      // Skip elements that are visually hidden
+      const style = window.getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden') return '';
+
+      let md = '';
+      for (const child of node.childNodes) {
+        md += domToMarkdown(child);
+      }
+
+      if (tag === 'h1') return `\n# ${md.trim()}\n\n`;
+      if (tag === 'h2') return `\n## ${md.trim()}\n\n`;
+      if (tag === 'h3') return `\n### ${md.trim()}\n\n`;
+      if (tag === 'h4') return `\n#### ${md.trim()}\n\n`;
+      if (tag === 'h5') return `\n##### ${md.trim()}\n\n`;
+      if (tag === 'h6') return `\n###### ${md.trim()}\n\n`;
+      if (tag === 'p') return `\n${md.trim()}\n\n`;
+      if (tag === 'strong' || tag === 'b') return `**${md.trim()}**`;
+      if (tag === 'em' || tag === 'i') return `*${md.trim()}*`;
+      
+      if (tag === 'code') {
+        if (node.parentNode && node.parentNode.tagName.toLowerCase() !== 'pre') {
+          return `\`${md.trim()}\``;
+        }
+        return md; // pre handles the block
+      }
+      if (tag === 'pre') {
+        const langClass = Array.from(node.classList).find(c => c.startsWith('language-')) || '';
+        const lang = node.getAttribute('data-language') || langClass.replace('language-', '') || '';
+        const codeText = md.trim();
+        if (codeText) {
+          codeBlocks.push({ language: lang, code: codeText, lines: codeText.split('\n').length });
+        }
+        return `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n\n`;
+      }
+      
+      if (tag === 'a') return `[${md.trim()}](${node.href || ''})`;
+      if (tag === 'li') return `\n- ${md.trim()}`;
+      if (tag === 'ul' || tag === 'ol') return `\n${md}\n`;
+      if (tag === 'blockquote') return `\n> ${md.trim().replace(/\n/g, '\n> ')}\n\n`;
+      if (tag === 'br') return `\n`;
+      if (tag === 'img') return `![${node.alt || ''}](${node.src || ''})`;
+      
+      if (['div', 'section', 'article', 'main'].includes(tag)) return `\n${md}\n`;
+
+      return md;
+    }
+
+    // Find a content element
     let contentEl = null;
     const CONTENT_SELECTORS = [
       '#readme .markdown-body',
@@ -60,50 +117,22 @@
     }
 
     let markdown = '';
-    let truncated = false;
-
-    if (contentEl && contentEl.childElementCount < 500) {
-      // Small enough to safely read textContent
-      try {
-        markdown = contentEl.textContent || '';
-        if (markdown.length > 100000) {
-          markdown = markdown.slice(0, 100000);
-          truncated = true;
-        }
-        markdown = markdown.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-      } catch (e) {
-        markdown = title;
+    try {
+      if (contentEl) {
+        markdown = domToMarkdown(contentEl);
+      } else {
+        // Fallback to body but skip huge trees
+        markdown = domToMarkdown(document.body);
+      }
+      // Cleanup whitespace
+      markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
+      
+      // Safety limit
+      if (markdown.length > 200000) {
+        markdown = markdown.slice(0, 200000);
         truncated = true;
       }
-    } else if (contentEl) {
-      // Content element exists but might be large — read only direct children
-      try {
-        const children = contentEl.children;
-        const parts = [];
-        const limit = Math.min(children.length, 50);
-        let charCount = 0;
-        for (let i = 0; i < limit && charCount < 50000; i++) {
-          const child = children[i];
-          const tag = child.tagName?.toLowerCase() || '';
-          if (['script', 'style', 'nav', 'footer', 'svg', 'noscript'].includes(tag)) continue;
-          const text = child.textContent || '';
-          if (text.length > 10000) {
-            parts.push(text.slice(0, 10000));
-            charCount += 10000;
-            truncated = true;
-          } else if (text.trim().length > 0) {
-            parts.push(text.trim());
-            charCount += text.length;
-          }
-        }
-        markdown = parts.join('\n\n');
-        if (children.length > 50) truncated = true;
-      } catch (e) {
-        markdown = title;
-        truncated = true;
-      }
-    } else {
-      // No content element found at all
+    } catch (e) {
       markdown = title;
       truncated = true;
     }
@@ -116,33 +145,44 @@
     else if (url.includes('developer.mozilla.org')) contentType = 'api_docs';
     else if (url.match(/\/docs?\//i)) contentType = 'api_docs';
 
-    // Build chunks
-    const words = markdown.split(/\s+/);
+    // Semantic Chunking
+    const paragraphs = markdown.split(/\n\n+/);
     const chunks = [];
+    let currentChunk = '';
     let start = 0;
-    while (start < words.length) {
-      const end = Math.min(start + 1200, words.length);
-      chunks.push({ index: chunks.length, text: words.slice(start, end).join(' '), start, end });
-      start = end - 150;
-      if (start >= words.length) break;
+    
+    // Roughly 5000 chars is ~1000 words
+    for (const p of paragraphs) {
+      if (currentChunk.length + p.length > 5000 && currentChunk.length > 0) {
+        chunks.push({ index: chunks.length, text: currentChunk.trim(), start, end: start + currentChunk.length });
+        start += currentChunk.length;
+        currentChunk = p + '\n\n';
+      } else {
+        currentChunk += p + '\n\n';
+      }
     }
+    if (currentChunk.trim()) {
+      chunks.push({ index: chunks.length, text: currentChunk.trim(), start, end: start + currentChunk.length });
+    }
+
+    const words = markdown.split(/\s+/).filter(w => w.length > 0);
 
     return {
       title,
       url: location.href,
       raw_content: markdown,
       chunks,
-      codeBlocks: [],
+      codeBlocks,
       meta: {
         domain: location.hostname,
         contentType,
         tags: [],
         readabilityScore: 70,
-        extractionMode: 'safe',
+        extractionMode: contentEl ? 'semantic' : 'fallback',
         language: document.documentElement.lang || 'en',
         content_length: markdown.length,
         word_count: words.length,
-        code_block_count: 0,
+        code_block_count: codeBlocks.length,
         chunk_count: chunks.length,
         truncated: truncated || undefined,
       },

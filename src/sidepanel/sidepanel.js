@@ -79,7 +79,10 @@ const els = {
   clearChatBtn:      $('clearChatBtn'),
   chatContextLabel:  $('chatContextLabel'),
   chatProvider:      $('chatProvider'),
+  chatApiKeyGroup:   $('chatApiKeyGroup'),
   chatApiKey:        $('chatApiKey'),
+  ollamaHostGroup:   $('ollamaHostGroup'),
+  ollamaHost:        $('ollamaHost'),
 };
 
 let currentTabUrl = '';
@@ -655,13 +658,17 @@ async function loadSettings() {
   updateEndpointSettingsVisibility(currentStorageMode);
 
   // Load chat provider settings
-  const chatSettings = await chrome.storage.local.get(['chatProvider', 'chatApiKey']);
+  const chatSettings = await chrome.storage.local.get(['chatProvider', 'chatApiKey', 'ollamaHost']);
   if (els.chatProvider) {
     els.chatProvider.value = chatSettings.chatProvider || 'claude';
   }
   if (els.chatApiKey) {
     els.chatApiKey.value = chatSettings.chatApiKey || '';
   }
+  if (els.ollamaHost) {
+    els.ollamaHost.value = chatSettings.ollamaHost || 'http://localhost:11434';
+  }
+  updateChatProviderSettingsVisibility(chatSettings.chatProvider || 'claude');
 }
 
 async function saveSettings() {
@@ -679,17 +686,27 @@ async function saveSettings() {
   // Save chat provider settings alongside existing settings
   const chatProvider = els.chatProvider ? els.chatProvider.value : 'claude';
   const chatApiKeyValue = els.chatApiKey ? els.chatApiKey.value.trim() : '';
+  const ollamaHostValue = els.ollamaHost ? els.ollamaHost.value.trim() : 'http://localhost:11434';
 
   await chrome.storage.local.set({
     settings,
     chatProvider,
     chatApiKey: chatApiKeyValue,
+    ollamaHost: ollamaHostValue,
   });
 
   currentStorageMode = storageMode;
   closeSettings();
   showToast('Settings saved', 'success');
   await updateStatusPillForMode();
+}
+
+function updateChatProviderSettingsVisibility(provider) {
+  if (els.ollamaHostGroup && els.chatApiKeyGroup) {
+    const isOllama = provider === 'ollama';
+    els.ollamaHostGroup.classList.toggle('hidden', !isOllama);
+    els.chatApiKeyGroup.classList.toggle('hidden', isOllama);
+  }
 }
 
 function updateEndpointSettingsVisibility(mode) {
@@ -761,6 +778,13 @@ function bindEvents() {
   els.settingStorageMode.addEventListener('change', () => {
     updateEndpointSettingsVisibility(els.settingStorageMode.value);
   });
+
+  // Chat provider change → update ollama/apikey visibility
+  if (els.chatProvider) {
+    els.chatProvider.addEventListener('change', () => {
+      updateChatProviderSettingsVisibility(els.chatProvider.value);
+    });
+  }
 
   els.testEndpointBtn.addEventListener('click', async (e) => {
     e.preventDefault();

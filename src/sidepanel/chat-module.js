@@ -121,13 +121,14 @@ export class ChatModule {
    * @returns {Promise<{provider: string, apiKey: string, model: string}>}
    */
   async getProviderConfig() {
-    const result = await chrome.storage.local.get(['chatProvider', 'chatApiKey', 'chatModel']);
+    const result = await chrome.storage.local.get(['chatProvider', 'chatApiKey', 'chatModel', 'ollamaHost']);
 
     const provider = result.chatProvider || 'claude';
     const apiKey = result.chatApiKey || '';
     const model = result.chatModel || getDefaultModel(provider);
+    const ollamaHost = result.ollamaHost || 'http://localhost:11434';
 
-    return { provider, apiKey, model };
+    return { provider, apiKey, model, ollamaHost };
   }
 
   /**
@@ -165,9 +166,9 @@ export class ChatModule {
 
     try {
       // Get provider config
-      const { provider, apiKey, model } = await this.getProviderConfig();
+      const { provider, apiKey, model, ollamaHost } = await this.getProviderConfig();
 
-      if (!apiKey) {
+      if (provider !== 'ollama' && !apiKey) {
         this.chatUI.showError('No API key configured. Add your API key in Settings.');
         this.chatUI.setInputEnabled(true);
         return;
@@ -199,6 +200,7 @@ export class ChatModule {
         {
           apiKey,
           model,
+          ollamaHost,
           systemPrompt,
           messages: this.conversationHistory.map(msg => ({
             role: msg.role,

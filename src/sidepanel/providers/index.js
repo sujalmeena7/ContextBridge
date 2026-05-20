@@ -6,6 +6,7 @@
 import { streamChat as claudeStreamChat } from './claude.js';
 import { streamChat as openaiStreamChat } from './openai.js';
 import { streamChat as geminiStreamChat } from './gemini.js';
+import { streamChat as ollamaStreamChat } from './ollama.js';
 
 /**
  * Default models for each supported provider.
@@ -13,13 +14,15 @@ import { streamChat as geminiStreamChat } from './gemini.js';
 export const DEFAULT_MODELS = {
   claude: 'claude-sonnet-4-20250514',
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-2.5-flash'
+  gemini: 'gemini-2.5-flash',
+  ollama: 'llama3'
 };
 
 const PROVIDERS = {
   claude: claudeStreamChat,
   openai: openaiStreamChat,
-  gemini: geminiStreamChat
+  gemini: geminiStreamChat,
+  ollama: ollamaStreamChat
 };
 
 /**
@@ -31,7 +34,7 @@ const PROVIDERS = {
 export function getProvider(providerName) {
   const provider = PROVIDERS[providerName];
   if (!provider) {
-    throw new Error(`Unknown provider: "${providerName}". Supported: claude, openai, gemini`);
+    throw new Error(`Unknown provider: "${providerName}". Supported: claude, openai, gemini, ollama`);
   }
   return provider;
 }
@@ -45,7 +48,7 @@ export function getProvider(providerName) {
 export function getDefaultModel(providerName) {
   const model = DEFAULT_MODELS[providerName];
   if (!model) {
-    throw new Error(`Unknown provider: "${providerName}". Supported: claude, openai, gemini`);
+    throw new Error(`Unknown provider: "${providerName}". Supported: claude, openai, gemini, ollama`);
   }
   return model;
 }
