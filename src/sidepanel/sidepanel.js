@@ -83,6 +83,8 @@ const els = {
   chatApiKey:        $('chatApiKey'),
   ollamaHostGroup:   $('ollamaHostGroup'),
   ollamaHost:        $('ollamaHost'),
+  ollamaModelGroup:  $('ollamaModelGroup'),
+  ollamaModel:       $('ollamaModel'),
 };
 
 let currentTabUrl = '';
@@ -658,7 +660,7 @@ async function loadSettings() {
   updateEndpointSettingsVisibility(currentStorageMode);
 
   // Load chat provider settings
-  const chatSettings = await chrome.storage.local.get(['chatProvider', 'chatApiKey', 'ollamaHost']);
+  const chatSettings = await chrome.storage.local.get(['chatProvider', 'chatApiKey', 'chatModel', 'ollamaHost']);
   if (els.chatProvider) {
     els.chatProvider.value = chatSettings.chatProvider || 'claude';
   }
@@ -667,6 +669,9 @@ async function loadSettings() {
   }
   if (els.ollamaHost) {
     els.ollamaHost.value = chatSettings.ollamaHost || 'http://localhost:11434';
+  }
+  if (els.ollamaModel) {
+    els.ollamaModel.value = chatSettings.chatModel || 'llama3';
   }
   updateChatProviderSettingsVisibility(chatSettings.chatProvider || 'claude');
 }
@@ -687,11 +692,13 @@ async function saveSettings() {
   const chatProvider = els.chatProvider ? els.chatProvider.value : 'claude';
   const chatApiKeyValue = els.chatApiKey ? els.chatApiKey.value.trim() : '';
   const ollamaHostValue = els.ollamaHost ? els.ollamaHost.value.trim() : 'http://localhost:11434';
+  const ollamaModelValue = els.ollamaModel ? els.ollamaModel.value.trim() : 'llama3';
 
   await chrome.storage.local.set({
     settings,
     chatProvider,
     chatApiKey: chatApiKeyValue,
+    chatModel: ollamaModelValue,
     ollamaHost: ollamaHostValue,
   });
 
@@ -702,9 +709,10 @@ async function saveSettings() {
 }
 
 function updateChatProviderSettingsVisibility(provider) {
-  if (els.ollamaHostGroup && els.chatApiKeyGroup) {
+  if (els.ollamaHostGroup && els.ollamaModelGroup && els.chatApiKeyGroup) {
     const isOllama = provider === 'ollama';
     els.ollamaHostGroup.classList.toggle('hidden', !isOllama);
+    els.ollamaModelGroup.classList.toggle('hidden', !isOllama);
     els.chatApiKeyGroup.classList.toggle('hidden', isOllama);
   }
 }
